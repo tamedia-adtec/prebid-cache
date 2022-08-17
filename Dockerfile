@@ -1,11 +1,11 @@
-FROM ubuntu:18.04 AS build
+FROM ubuntu:20.04
 RUN apt-get update && \
     apt-get -y upgrade && \
     apt-get install -y wget
-ENV GO_INSTALLER=go1.16.4.linux-amd64.tar.gz
-WORKDIR /tmp
-RUN wget https://dl.google.com/go/$GO_INSTALLER && \
-    tar -C /usr/local -xzf $GO_INSTALLER
+RUN cd /tmp && \
+    wget https://dl.google.com/go/go1.16.4.linux-amd64.tar.gz && \
+    tar -xf go1.16.4.linux-amd64.tar.gz && \
+    mv go /usr/local
 RUN mkdir -p /app/prebid-cache/
 WORKDIR /app/prebid-cache/
 ENV GOROOT=/usr/local/go
@@ -18,23 +18,19 @@ ENV CGO_ENABLED 0
 COPY ./ ./
 RUN go mod vendor
 RUN go mod tidy
-ARG TEST="true"
+ARG TEST="false"
 RUN if [ "$TEST" != "false" ]; then ./validate.sh ; fi
-RUN go build -mod=vendor -ldflags "-X github.com/prebid/prebid-cache/version.Ver=`git describe --tags` -X github.com/prebid/prebid-cache/version.Rev=`git rev-parse HEAD`" .
+RUN go build -mod=vendor .
 
-FROM ubuntu:18.04 AS release
-LABEL maintainer="hans.hjort@xandr.com" 
+FROM ubuntu:20.04
+LABEL maintainer="hans.hjort@xandr.com"
 RUN apt-get update && \
     apt-get install --assume-yes apt-utils && \
     apt-get install -y ca-certificates && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 WORKDIR /usr/local/bin/
-COPY --from=build /app/prebid-cache/prebid-cache .
-RUN chmod a+xr prebid-cache
-COPY --from=build /app/prebid-cache/config.yaml .
-RUN chmod a+r config.yaml
-RUN adduser prebid_user
-USER prebid_user
+COPY --from=0 /app/prebid-cache/prebid-cache .
+COPY --from=0 /app/prebid-cache/config.yaml .
 EXPOSE 2424
 EXPOSE 2525
 ENTRYPOINT ["/usr/local/bin/prebid-cache"]
