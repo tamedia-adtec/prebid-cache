@@ -25,13 +25,13 @@ backend:
   memcache:
     hosts: "10.0.0.1:11211" # Can also use an array for multiple hosts
   redis:
-    host: "prebid-server-cache.c2lrn6.ng.0001.euc1.cache.amazonaws.com"
+    host: "host.docker.internal"
     port: 6379
-    password: ""
+    # password: "97383"
     db: 1
     tls:
       enabled: false
-      insecure_skip_verify: false
+      insecure_skip_verify: true
 compression:
   type: "none" # Can also be "none", "snappy"
 metrics:
