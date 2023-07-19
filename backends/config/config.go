@@ -16,6 +16,12 @@ import (
 
 func NewBackend(cfg config.Configuration, appMetrics *metrics.Metrics) backends.Backend {
 	backend := newBaseBackend(cfg.Backend, appMetrics)
+	backend = DecorateBackend(cfg, appMetrics, backend)
+
+	return backend
+}
+
+func DecorateBackend(cfg config.Configuration, appMetrics *metrics.Metrics, backend backends.Backend) backends.Backend {
 	backend = applyCompression(cfg.Compression, backend)
 	if cfg.RequestLimits.MaxSize > 0 {
 		backend = decorators.EnforceSizeLimit(backend, cfg.RequestLimits.MaxSize)
@@ -25,6 +31,7 @@ func NewBackend(cfg config.Configuration, appMetrics *metrics.Metrics) backends.
 	// We should re-work this strategy at some point.
 	backend = decorators.LogMetrics(backend, appMetrics)
 	backend = decorators.LimitTTLs(backend, getMaxTTLSeconds(cfg))
+
 	return backend
 }
 
@@ -84,8 +91,8 @@ func getMaxTTLSeconds(cfg config.Configuration) int {
 	case config.BackendAerospike:
 		// If both config.request_limits.max_ttl_seconds and config.backend.aerospike.default_ttl_seconds
 		// were defined, the smallest value takes preference
-		if cfg.Backend.Aerospike.DefaultTTL > 0 && maxTTLSeconds > cfg.Backend.Aerospike.DefaultTTL {
-			maxTTLSeconds = cfg.Backend.Aerospike.DefaultTTL
+		if cfg.Backend.Aerospike.DefaultTTLSecs > 0 && maxTTLSeconds > cfg.Backend.Aerospike.DefaultTTLSecs {
+			maxTTLSeconds = cfg.Backend.Aerospike.DefaultTTLSecs
 		}
 	case config.BackendRedis:
 		// If both config.request_limits.max_ttl_seconds and backend.redis.expiration

@@ -107,6 +107,7 @@ func (e *PutHandler) parseRequest(r *http.Request) (*putRequest, error) {
 //   - XML content gets unmarshaled in order to un-escape it and then gets
 //     prepended by its type
 //   - JSON content gets prepended by its type
+//
 // No other formats are supported.
 func parsePutObject(p putObject) (string, error) {
 	var toCache string
@@ -123,15 +124,11 @@ func parsePutObject(p putObject) (string, error) {
 
 	// Limit the type of data to XML or JSON
 	if p.Type == utils.XML_PREFIX {
-		if p.Value[0] != byte('"') || p.Value[len(p.Value)-1] != byte('"') {
-			return "", utils.NewPBCError(utils.MALFORMED_XML, fmt.Sprintf("XML messages must have a String value. Found %v", p.Value))
-		}
-
 		// Be careful about the cross-script escaping issues here. JSON requires quotation marks to be escaped,
 		// for example... so we'll need to un-escape it before we consider it to be XML content.
-		var interpreted string
-		if err := json.Unmarshal(p.Value, &interpreted); err != nil {
-			return "", utils.NewPBCError(utils.MALFORMED_XML, fmt.Sprintf("Error unmarshalling XML value: %v", p.Value))
+		interpreted, err := unescapeXML(p.Value)
+		if err != nil {
+			return "", err
 		}
 
 		toCache = p.Type + interpreted
@@ -142,6 +139,20 @@ func parsePutObject(p putObject) (string, error) {
 	}
 
 	return toCache, nil
+}
+
+// unescapeXML unmarshalls the rawXML into a string in order to unescape characters
+func unescapeXML(rawXML json.RawMessage) (string, error) {
+	if rawXML[0] != byte('"') || rawXML[len(rawXML)-1] != byte('"') {
+		return "", utils.NewPBCError(utils.MALFORMED_XML, fmt.Sprintf("XML messages must have a String value. Found %v", rawXML))
+	}
+
+	var interpreted string
+	if err := json.Unmarshal(rawXML, &interpreted); err != nil {
+		return "", utils.NewPBCError(utils.MALFORMED_XML, fmt.Sprintf("Error unmarshalling XML value: %v", rawXML))
+	}
+
+	return interpreted, nil
 }
 
 func classifyBackendError(err error, index int) error {

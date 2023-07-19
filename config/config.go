@@ -44,6 +44,7 @@ func setConfigDefaults(v *viper.Viper) {
 	v.SetDefault("port", 2424)
 	v.SetDefault("admin_port", 2525)
 	v.SetDefault("index_response", "This application stores short-term data for use in Prebid.")
+	v.SetDefault("status_response", "")
 	v.SetDefault("log.level", "info")
 	v.SetDefault("backend.type", "memory")
 	v.SetDefault("backend.aerospike.host", "")
@@ -53,6 +54,10 @@ func setConfigDefaults(v *viper.Viper) {
 	v.SetDefault("backend.aerospike.user", "")
 	v.SetDefault("backend.aerospike.password", "")
 	v.SetDefault("backend.aerospike.default_ttl_seconds", 0)
+	v.SetDefault("backend.aerospike.max_read_retries", 2)
+	v.SetDefault("backend.aerospike.max_write_retries", 0)
+	v.SetDefault("backend.aerospike.connection_idle_timeout_seconds", 0)
+	v.SetDefault("backend.aerospike.connection_queue_size", 0)
 	v.SetDefault("backend.cassandra.hosts", "")
 	v.SetDefault("backend.cassandra.keyspace", "")
 	v.SetDefault("backend.cassandra.default_ttl_seconds", utils.CASSANDRA_DEFAULT_TTL_SECONDS)
@@ -100,16 +105,17 @@ func setEnvVarsLookup(v *viper.Viper) {
 }
 
 type Configuration struct {
-	Port          int           `mapstructure:"port"`
-	AdminPort     int           `mapstructure:"admin_port"`
-	IndexResponse string        `mapstructure:"index_response"`
-	Log           Log           `mapstructure:"log"`
-	RateLimiting  RateLimiting  `mapstructure:"rate_limiter"`
-	RequestLimits RequestLimits `mapstructure:"request_limits"`
-	Backend       Backend       `mapstructure:"backend"`
-	Compression   Compression   `mapstructure:"compression"`
-	Metrics       Metrics       `mapstructure:"metrics"`
-	Routes        Routes        `mapstructure:"routes"`
+	Port           int           `mapstructure:"port"`
+	AdminPort      int           `mapstructure:"admin_port"`
+	IndexResponse  string        `mapstructure:"index_response"`
+	Log            Log           `mapstructure:"log"`
+	RateLimiting   RateLimiting  `mapstructure:"rate_limiter"`
+	RequestLimits  RequestLimits `mapstructure:"request_limits"`
+	StatusResponse string        `mapstructure:"status_response"`
+	Backend        Backend       `mapstructure:"backend"`
+	Compression    Compression   `mapstructure:"compression"`
+	Metrics        Metrics       `mapstructure:"metrics"`
+	Routes         Routes        `mapstructure:"routes"`
 }
 
 // ValidateAndLog validates the config, terminating the program on any errors.
@@ -293,19 +299,12 @@ type PrometheusMetrics struct {
 	Enabled          bool   `mapstructure:"enabled"`
 }
 
+// validateAndLog will error out when the value of port is 0
 func (promMetricsConfig *PrometheusMetrics) validateAndLog() {
-	// validate
 	if promMetricsConfig.Port == 0 {
 		log.Fatalf(`Despite being enabled, prometheus metrics came with an empty port number: config.metrics.prometheus.port = 0`)
 	}
-	if promMetricsConfig.Namespace == "" {
-		log.Fatalf(`Despite being enabled, prometheus metrics came with an empty name space: config.metrics.prometheus.namespace = %s.`, promMetricsConfig.Namespace)
-	}
-	if promMetricsConfig.Subsystem == "" {
-		log.Fatalf(`Despite being enabled, prometheus metrics came with an empty subsystem value: config.metrics.prometheus.subsystem = \"\".`)
-	}
 
-	// log
 	log.Infof("config.metrics.prometheus.namespace: %s", promMetricsConfig.Namespace)
 	log.Infof("config.metrics.prometheus.subsystem: %s", promMetricsConfig.Subsystem)
 	log.Infof("config.metrics.prometheus.port: %d", promMetricsConfig.Port)

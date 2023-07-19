@@ -3,6 +3,7 @@ package backends
 import (
 	"context"
 	"errors"
+	"time"
 
 	as "github.com/aerospike/aerospike-client-go/v6"
 	as_types "github.com/aerospike/aerospike-client-go/v6/types"
@@ -61,6 +62,18 @@ func NewAerospikeBackend(cfg config.Aerospike, metrics *metrics.Metrics) *Aerosp
 	clientPolicy.User = cfg.User
 	clientPolicy.Password = cfg.Password
 
+	// Aerospike's connection idle deadline default is 55 seconds. If greater than zero, this
+	// value will override
+	if cfg.ConnIdleTimeoutSecs > 0 {
+		clientPolicy.IdleTimeout = time.Duration(cfg.ConnIdleTimeoutSecs) * time.Second
+	}
+
+	// Aerospike's default connection queue size per node is 256.
+	// If cfg.ConnQueueSize is greater than zero, it will override the default.
+	if cfg.ConnQueueSize > 0 {
+		clientPolicy.ConnectionQueueSize = cfg.ConnQueueSize
+	}
+
 	if len(cfg.Host) > 1 {
 		hosts = append(hosts, as.NewHost(cfg.Host, cfg.Port))
 		log.Info("config.backend.aerospike.host is being deprecated in favor of config.backend.aerospike.hosts")
@@ -75,6 +88,20 @@ func NewAerospikeBackend(cfg config.Aerospike, metrics *metrics.Metrics) *Aerosp
 		panic("AerospikeBackend failure. This shouldn't happen.")
 	}
 	log.Infof("Connected to Aerospike host(s) %v on port %d", append(cfg.Hosts, cfg.Host), cfg.Port)
+
+	// client.DefaultPolicy.MaxRetries determines the maximum number of retries before aborting a transaction.
+	// Default for read: 2 (initial attempt + 2 retries = 3 attempts)
+	if cfg.MaxReadRetries > 2 {
+		client.DefaultPolicy.MaxRetries = cfg.MaxReadRetries
+	}
+
+	// client.DefaultWritePolicy.MaxRetries determines the maximum number of retries for write before aborting
+	// a transaction. Prebid Cache uses the Aerospike backend to do CREATE_ONLY writes, which are idempotent so
+	// it's safe to increase the maximum value of write retries.
+	// Default for write: 0 (no retries)
+	if cfg.MaxWriteRetries > 0 {
+		client.DefaultWritePolicy.MaxRetries = cfg.MaxWriteRetries
+	}
 
 	return &AerospikeBackend{
 		namespace: cfg.Namespace,
