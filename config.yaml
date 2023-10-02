@@ -1,5 +1,6 @@
 port: 2424
 admin_port: 2525
+index_response: "Goldlayer - prebid server"
 log:
   level: "info"
 rate_limiter:
