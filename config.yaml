@@ -1,11 +1,11 @@
 port: 2424
 admin_port: 2525
-index_response: "Goldlayer - prebid server"
+index_response: "Goldlayer - prebid cache"
 log:
   level: "info"
 rate_limiter:
   enabled: false
-  num_requests: 200
+  num_requests: 1000
 request_limits:
   allow_setting_keys: true
   max_size_bytes: 100000
