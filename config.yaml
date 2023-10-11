@@ -8,8 +8,8 @@ rate_limiter:
   num_requests: 1200
 request_limits:
   allow_setting_keys: true
-  max_size_bytes: 200000
-  max_num_values: 40000
+  max_size_bytes: 40960
+  max_num_values: 200000
   max_ttl_seconds: 3600
 backend:
   type: "redis"
