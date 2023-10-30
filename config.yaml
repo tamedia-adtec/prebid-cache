@@ -10,7 +10,7 @@ request_limits:
   allow_setting_keys: true
   max_size_bytes: 40960
   max_num_values: 204799
-  max_ttl_seconds: 3600
+  max_ttl_seconds: 600
 backend:
   type: "redis"
   redis:
