@@ -5,7 +5,7 @@ log:
   level: "info"
 rate_limiter:
   enabled: false
-  num_requests: 1200
+  num_requests: 3000
 request_limits:
   allow_setting_keys: true
   max_size_bytes: 40960
