@@ -17,6 +17,7 @@ backend:
     host: "host.docker.internal"
     port: 6379
     db: 1
+    expiration: 5  # in minutes
     tls:
       enabled: false
       insecure_skip_verify: true
