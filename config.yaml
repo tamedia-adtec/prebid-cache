@@ -11,16 +11,16 @@ request_limits:
   max_size_bytes: 40960
   max_num_values: 204799
   max_ttl_seconds: 600
-backend:
-  type: "redis"
-  redis:
-    host: "host.docker.internal"
-    port: 6379
-    db: 1
-    expiration: 5  # in minutes
-    tls:
-      enabled: false
-      insecure_skip_verify: true
+# backend:
+#   type: "redis"
+#   redis:
+#     host: "host.docker.internal"
+#     port: 6379
+#     db: 1
+#     expiration: 5  # in minutes
+#     tls:
+#       enabled: false
+#       insecure_skip_verify: true
 compression:
   type: "none"
 metrics:
