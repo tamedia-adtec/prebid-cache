@@ -10,14 +10,14 @@ request_limits:
   allow_setting_keys: true
   max_size_bytes: 40960
   max_num_values: 204799
-  max_ttl_seconds: 600
+  max_ttl_seconds: 3600
 backend:
   type: "redis"
   redis:
     host: "host.docker.internal"
     port: 6379
     db: 1
-    expiration: 5  # in minutes
+    expiration: 60  # in minutes
     tls:
       enabled: false
       insecure_skip_verify: true
