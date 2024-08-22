@@ -1,7 +1,13 @@
+# dep directory
 vendor
+
+# build artifacts
 prebid-cache
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+
+# ide
+.vscode/
