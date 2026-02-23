@@ -1,4 +1,4 @@
-FROM golang:1.20-alpine
+FROM golang:1.25-alpine
 
 RUN apk add --update tini 
 RUN mkdir -p /app/prebid-cache/
