@@ -8,8 +8,8 @@ rate_limiter:
   num_requests: 5000
 request_limits:
   allow_setting_keys: true
-  max_size_bytes: 40960
-  max_num_values: 204799
+  max_size_bytes: 102400
+  max_num_values: 100
   max_ttl_seconds: 3600
 request_logging:
   referer_sampling_rate: 0.0
@@ -19,12 +19,12 @@ backend:
     host: "host.docker.internal"
     port: 6379
     db: 1
-    expiration: 60  # in minutes
+    expiration: 60  # in minutes (deprecated in favor of request_limits.max_ttl_seconds)
     tls:
       enabled: false
       insecure_skip_verify: true
 compression:
-  type: "none"
+  type: "snappy"
 metrics:
   type: "none"
 routes:
